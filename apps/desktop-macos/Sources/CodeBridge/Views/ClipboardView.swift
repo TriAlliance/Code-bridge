@@ -254,30 +254,6 @@ struct CodeBlockView: View {
     }
 }
 
-// Model
-struct ClipboardEntry: Identifiable, Hashable {
-    let id: String
-    let contentType: String
-    let preview: String?
-    let timestamp: Date
-    let sourceDevice: String
-    var isFavorite: Bool
-    var isPinned: Bool
-    let textContent: String?
-    let imageData: Data?
-    let language: String?
-    let appSource: String?
-    let dataSize: Int
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-
-    static func == (lhs: ClipboardEntry, rhs: ClipboardEntry) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 #Preview {
     ClipboardView()
         .environmentObject(BridgeManager())

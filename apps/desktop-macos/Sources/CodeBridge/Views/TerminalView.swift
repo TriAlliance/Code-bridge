@@ -411,42 +411,6 @@ struct EnvironmentVarsView: View {
     }
 }
 
-// Models
-struct TerminalRecording: Identifiable, Hashable {
-    let id: String
-    let title: String
-    let shell: String
-    let recordedAt: Date
-    let duration: TimeInterval
-    let outputPreview: String
-}
-
-struct CommandHistoryEntry: Identifiable {
-    let id: String
-    let command: String
-    let workingDir: String
-    let exitCode: Int?
-    let duration: TimeInterval?
-    let timestamp: Date
-    let sourceDevice: String
-}
-
-struct ShellAlias {
-    let name: String
-    let command: String
-}
-
-struct ShellFunction {
-    let name: String
-    let body: String
-}
-
-struct EnvironmentVar {
-    let name: String
-    let value: String
-    let isSensitive: Bool
-}
-
 #Preview {
     TerminalView()
         .environmentObject(BridgeManager())

@@ -4,22 +4,17 @@ import PackageDescription
 let package = Package(
     name: "CodeBridge",
     platforms: [
-        .macOS(.v13)
+        .macOS(.v14)
     ],
     products: [
         .executable(name: "CodeBridge", targets: ["CodeBridge"])
     ],
-    dependencies: [
-        // Swift dependencies would go here
-    ],
+    dependencies: [],
     targets: [
         .executableTarget(
             name: "CodeBridge",
             dependencies: [],
-            path: "Sources/CodeBridge",
-            resources: [
-                .process("Resources")
-            ]
+            path: "Sources/CodeBridge"
         )
     ]
 )

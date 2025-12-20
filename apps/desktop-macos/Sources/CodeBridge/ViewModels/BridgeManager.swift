@@ -366,32 +366,3 @@ class BridgeManager: ObservableObject {
         ]
     }
 }
-
-// Data Models
-
-struct Peer: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let addresses: [String]
-    var isConnected: Bool
-    var lastSeen: Date
-}
-
-struct TrackedFile: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let path: String
-    let size: Int64
-    let hash: String
-    let mimeType: String?
-    let modifiedAt: Date
-}
-
-struct Screenshot: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let path: String
-    let size: Int64
-    let capturedAt: Date
-    let ocrText: String?
-}
