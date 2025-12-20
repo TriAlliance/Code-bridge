@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Bridge</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --accent: #e94560;
+            --success: #4ade80;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-secondary);
+        }
+
+        .status-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section h2 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .list {
+            list-style: none;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .list-item-meta {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 2rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed #333;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .drop-zone.active {
+            border-color: var(--accent);
+            background: rgba(233, 69, 96, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📂 Code Bridge</h1>
+            <p>P2P File Sharing for Developers</p>
+        </header>
+
+        <div class="status-card">
+            <div class="stat">
+                <div class="stat-value" id="device-name">-</div>
+                <div class="stat-label">Device</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="peer-count">0</div>
+                <div class="stat-label">Peers</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="file-count">0</div>
+                <div class="stat-label">Files</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="sync-status">●</div>
+                <div class="stat-label">Status</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="primary" id="sync-btn">🔄 Sync Now</button>
+            <button id="discover-btn">🔍 Discover Peers</button>
+            <button id="add-files-btn">➕ Add Files</button>
+        </div>
+
+        <div class="section">
+            <h2>Connected Peers</h2>
+            <ul class="list" id="peer-list">
+                <li class="empty">No peers connected</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Recent Files</h2>
+            <ul class="list" id="file-list">
+                <li class="empty">No files tracked</li>
+            </ul>
+        </div>
+
+        <div class="drop-zone" id="drop-zone">
+            <p>Drop files here to share</p>
+        </div>
+    </div>
+
+    <script>
+        const { invoke } = window.__TAURI__.core;
+
+        async function updateStatus() {
+            try {
+                const status = await invoke('get_status');
+                document.getElementById('device-name').textContent = status.device_name;
+                document.getElementById('peer-count').textContent = status.peer_count;
+                document.getElementById('file-count').textContent = status.file_count;
+                document.getElementById('sync-status').textContent = status.is_syncing ? '🔄' : '✓';
+                document.getElementById('sync-status').style.color = status.is_syncing ? '#fbbf24' : '#4ade80';
+            } catch (e) {
+                console.error('Failed to get status:', e);
+            }
+        }
+
+        async function updatePeers() {
+            try {
+                const peers = await invoke('list_peers');
+                const list = document.getElementById('peer-list');
+
+                if (peers.length === 0) {
+                    list.innerHTML = '<li class="empty">No peers connected</li>';
+                } else {
+                    list.innerHTML = peers.map(p => `
+                        <li class="list-item">
+                            <span class="list-item-name">
+                                <span class="status-dot"></span>
+                                ${p.name}
+                            </span>
+                            <span class="list-item-meta">${p.id.slice(0, 16)}...</span>
+                        </li>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Failed to list peers:', e);
+            }
+        }
+
+        async function updateFiles() {
+            try {
+                const files = await invoke('list_files');
+                const list = document.getElementById('file-list');
+
+                if (files.length === 0) {
+                    list.innerHTML = '<li class="empty">No files tracked</li>';
+                } else {
+                    list.innerHTML = files.slice(0, 10).map(f => `
+                        <li class="list-item">
+                            <span class="list-item-name">${f.path}</span>
+                            <span class="list-item-meta">${formatSize(f.size)}</span>
+                        </li>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Failed to list files:', e);
+            }
+        }
+
+        function formatSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return `${size.toFixed(1)} ${units[unitIndex]}`;
+        }
+
+        document.getElementById('sync-btn').addEventListener('click', async () => {
+            try {
+                await invoke('start_sync');
+                updateStatus();
+            } catch (e) {
+                console.error('Sync failed:', e);
+            }
+        });
+
+        document.getElementById('discover-btn').addEventListener('click', async () => {
+            try {
+                await invoke('discover_peers');
+                updatePeers();
+            } catch (e) {
+                console.error('Discovery failed:', e);
+            }
+        });
+
+        document.getElementById('add-files-btn').addEventListener('click', async () => {
+            // Use Tauri dialog
+            const { open } = window.__TAURI__.dialog;
+            const selected = await open({ multiple: true, directory: false });
+            if (selected) {
+                const paths = Array.isArray(selected) ? selected : [selected];
+                const count = await invoke('add_files', { paths });
+                alert(`Added ${count} files`);
+                updateFiles();
+                updateStatus();
+            }
+        });
+
+        // Drag and drop
+        const dropZone = document.getElementById('drop-zone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('active');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('active');
+        });
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            // Handle dropped files via Tauri
+        });
+
+        // Initial load
+        updateStatus();
+        updatePeers();
+        updateFiles();
+
+        // Periodic refresh
+        setInterval(() => {
+            updateStatus();
+            updatePeers();
+        }, 5000);
+    </script>
+</body>
+</html>

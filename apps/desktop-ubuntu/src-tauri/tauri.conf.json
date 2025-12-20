@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Code Bridge",
+  "version": "0.1.0",
+  "identifier": "io.coachly.codebridge",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Code Bridge",
+        "width": 1024,
+        "height": 768,
+        "minWidth": 600,
+        "minHeight": 400,
+        "center": true,
+        "resizable": true,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    },
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "targets": ["deb", "appimage"],
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    }
+  }
+}

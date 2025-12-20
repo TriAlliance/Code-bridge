@@ -1,0 +1,95 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/bridge-core",
+    "crates/bridge-cli",
+    "crates/bridge-ffi",
+    "crates/bridge-mcp",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Coachly Team"]
+license = "MIT"
+repository = "https://github.com/TriAlliance/Code-bridge"
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# P2P networking
+libp2p = { version = "0.54", features = [
+    "tokio",
+    "dns",
+    "identify",
+    "kad",
+    "mdns",
+    "noise",
+    "ping",
+    "quic",
+    "relay",
+    "rendezvous",
+    "request-response",
+    "tcp",
+    "yamux",
+    "macros",
+    "serde",
+] }
+
+# File watching
+notify = { version = "6.1", default-features = false, features = ["macos_fsevent"] }
+notify-debouncer-mini = "0.4"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+flatbuffers = "24.3"
+
+# Content hashing
+blake3 = "1.5"
+sha2 = "0.10"
+
+# Database
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# CLI
+clap = { version = "4.4", features = ["derive"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Utilities
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+directories = "5.0"
+walkdir = "2.4"
+glob = "0.3"
+humansize = "2.1"
+
+# Async utilities
+futures = "0.3"
+async-trait = "0.1"
+
+# MCP Server
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }
+hyper = { version = "1.1", features = ["full"] }
+
+# Hostname
+hostname = "0.3"
+
+# Dirs
+dirs = "5.0"
+walkdir = { workspace = true }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

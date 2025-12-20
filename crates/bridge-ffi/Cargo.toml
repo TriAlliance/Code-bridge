@@ -1,0 +1,20 @@
+[package]
+name = "bridge-ffi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "FFI bindings for Coachly Code Bridge - Swift/C interop"
+
+[lib]
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+bridge-core = { path = "../bridge-core" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[build-dependencies]
+# swift-bridge = "0.1"

@@ -1,0 +1,50 @@
+[package]
+name = "bridge-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Core library for Coachly Code Bridge - P2P file sharing for developers"
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true }
+
+# P2P networking
+libp2p = { workspace = true }
+
+# File watching
+notify = { workspace = true }
+notify-debouncer-mini = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Content hashing
+blake3 = { workspace = true }
+
+# Database
+rusqlite = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+directories = { workspace = true }
+walkdir = { workspace = true }
+humansize = { workspace = true }
+
+# Async utilities
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.9"
+tokio-test = "0.4"

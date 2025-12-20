@@ -1,0 +1,108 @@
+version: '3.8'
+
+# Coachly Code Bridge - QNAP Docker Services
+# Deploy on QNAP Container Station
+
+services:
+  # Main Bridge API Service
+  bridge-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: codebridge-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - /share/CodeBridge/data:/data
+      - /share/Screenshots:/screenshots:ro
+      - /share/Projects:/projects:ro
+    environment:
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://codebridge:${DB_PASSWORD}@postgres:5432/codebridge
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - codebridge
+
+  # MCP Server for Claude Code
+  mcp-server:
+    build:
+      context: ./mcp
+      dockerfile: Dockerfile
+    container_name: codebridge-mcp
+    ports:
+      - "3100:3100"
+    volumes:
+      - /share/CodeBridge/data:/data
+      - /share/Screenshots:/screenshots:ro
+      - /share/Projects:/projects:ro
+    environment:
+      - RUST_LOG=info
+    restart: unless-stopped
+    networks:
+      - codebridge
+
+  # Screenshot OCR Worker
+  ocr-worker:
+    build:
+      context: ./ocr-worker
+      dockerfile: Dockerfile
+    container_name: codebridge-ocr
+    volumes:
+      - /share/Screenshots:/screenshots
+      - /share/CodeBridge/ocr:/ocr-output
+    environment:
+      - TESSERACT_LANG=eng
+      - WATCH_DIR=/screenshots
+      - OUTPUT_DIR=/ocr-output
+    restart: unless-stopped
+    networks:
+      - codebridge
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: codebridge-postgres
+    volumes:
+      - /share/CodeBridge/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=codebridge
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=codebridge
+    restart: unless-stopped
+    networks:
+      - codebridge
+
+  # Redis for caching and real-time sync
+  redis:
+    image: redis:7-alpine
+    container_name: codebridge-redis
+    volumes:
+      - /share/CodeBridge/redis:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - codebridge
+
+  # Web UI for browsing files and screenshots
+  web-ui:
+    build:
+      context: ./web-ui
+      dockerfile: Dockerfile
+    container_name: codebridge-web
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://bridge-api:8080
+    depends_on:
+      - bridge-api
+    restart: unless-stopped
+    networks:
+      - codebridge
+
+networks:
+  codebridge:
+    driver: bridge

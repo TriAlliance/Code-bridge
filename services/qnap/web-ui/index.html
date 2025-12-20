@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Bridge - File Browser</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>📂 Code Bridge</h1>
+        <nav>
+            <button class="nav-btn active" data-view="files">Files</button>
+            <button class="nav-btn" data-view="screenshots">Screenshots</button>
+            <button class="nav-btn" data-view="peers">Peers</button>
+            <button class="nav-btn" data-view="settings">Settings</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Files View -->
+        <section id="files-view" class="view active">
+            <div class="toolbar">
+                <input type="text" id="file-search" placeholder="Search files...">
+                <button id="refresh-files">↻ Refresh</button>
+            </div>
+            <div class="file-list" id="file-list">
+                <div class="loading">Loading files...</div>
+            </div>
+        </section>
+
+        <!-- Screenshots View -->
+        <section id="screenshots-view" class="view">
+            <div class="toolbar">
+                <input type="text" id="screenshot-search" placeholder="Search by OCR text...">
+                <button id="refresh-screenshots">↻ Refresh</button>
+            </div>
+            <div class="screenshot-grid" id="screenshot-grid">
+                <div class="loading">Loading screenshots...</div>
+            </div>
+        </section>
+
+        <!-- Peers View -->
+        <section id="peers-view" class="view">
+            <div class="toolbar">
+                <button id="discover-peers">🔍 Discover Peers</button>
+            </div>
+            <div class="peer-list" id="peer-list">
+                <div class="loading">Loading peers...</div>
+            </div>
+        </section>
+
+        <!-- Settings View -->
+        <section id="settings-view" class="view">
+            <div class="settings-panel">
+                <h2>Configuration</h2>
+                <div class="setting">
+                    <label>Device Name</label>
+                    <input type="text" id="device-name" placeholder="My Device">
+                </div>
+                <div class="setting">
+                    <label>Watch Directories</label>
+                    <textarea id="watch-dirs" placeholder="/path/to/watch"></textarea>
+                </div>
+                <div class="setting">
+                    <label>Ignore Patterns</label>
+                    <textarea id="ignore-patterns" placeholder=".git&#10;node_modules"></textarea>
+                </div>
+                <button id="save-settings">Save Settings</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <span id="status">Connecting...</span>
+        <span id="version">Code Bridge v0.1.0</span>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+[package]
+name = "bridge-mcp"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "MCP Server for Coachly Code Bridge - Claude Code integration"
+
+[[bin]]
+name = "bridge-mcp-server"
+path = "src/main.rs"
+
+[dependencies]
+# Core library
+bridge-core = { path = "../bridge-core" }
+
+# Async runtime
+tokio = { workspace = true }
+
+# MCP/HTTP
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+walkdir = { workspace = true }
