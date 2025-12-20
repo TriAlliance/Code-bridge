@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "code-bridge": {
+      "command": "~/.code-bridge/bin/bridge-mcp-server",
+      "args": ["--stdio"],
+      "env": {
+        "CODE_BRIDGE_CONFIG": "~/.config/code-bridge/config.toml",
+        "RUST_LOG": "info"
+      }
+    }
+  }
+}

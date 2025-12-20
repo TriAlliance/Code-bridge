@@ -11,8 +11,11 @@ name = "bridge-mcp-server"
 path = "src/main.rs"
 
 [dependencies]
-# Core library
+# Core libraries
 bridge-core = { path = "../bridge-core" }
+bridge-clipboard = { path = "../bridge-clipboard" }
+bridge-notifications = { path = "../bridge-notifications" }
+bridge-terminal = { path = "../bridge-terminal" }
 
 # Async runtime
 tokio = { workspace = true }

@@ -254,6 +254,7 @@ async fn handle_initialize(_request: &McpRequest) -> Result<serde_json::Value, M
 
 async fn handle_tools_list() -> Result<serde_json::Value, McpError> {
     let tools = vec![
+        // === Core Bridge Tools ===
         Tool {
             name: "bridge_status".to_string(),
             description: "Get the current status of Code Bridge including connected peers and sync state".to_string(),
@@ -337,6 +338,198 @@ async fn handle_tools_list() -> Result<serde_json::Value, McpError> {
                 "required": []
             }),
         },
+        // === Clipboard Tools ===
+        Tool {
+            name: "clipboard_get".to_string(),
+            description: "Get the current clipboard content from Code Bridge".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+        },
+        Tool {
+            name: "clipboard_set".to_string(),
+            description: "Set clipboard content and sync across devices".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "Text content to copy to clipboard"
+                    },
+                    "content_type": {
+                        "type": "string",
+                        "enum": ["text", "code", "url"],
+                        "description": "Type of content (defaults to text)"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Programming language for code snippets"
+                    }
+                },
+                "required": ["text"]
+            }),
+        },
+        Tool {
+            name: "clipboard_history".to_string(),
+            description: "Get clipboard history from all synced devices".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of entries to return",
+                        "default": 20
+                    },
+                    "search": {
+                        "type": "string",
+                        "description": "Search query to filter clipboard history"
+                    }
+                },
+                "required": []
+            }),
+        },
+        Tool {
+            name: "clipboard_favorites".to_string(),
+            description: "Get favorited clipboard entries for quick access".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+        },
+        // === Notification Tools ===
+        Tool {
+            name: "notifications_list".to_string(),
+            description: "List recent developer notifications (builds, tests, PRs, etc.)".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "enum": ["build", "test", "pr", "alert", "all"],
+                        "description": "Filter by category"
+                    },
+                    "unread_only": {
+                        "type": "boolean",
+                        "description": "Only show unread notifications"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum notifications to return",
+                        "default": 20
+                    }
+                },
+                "required": []
+            }),
+        },
+        Tool {
+            name: "notifications_send".to_string(),
+            description: "Send a notification to connected devices".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "Notification title"
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "Notification body/message"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": ["low", "normal", "high", "critical"],
+                        "description": "Notification priority level"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": ["system", "build", "test", "deploy", "pr", "alert"],
+                        "description": "Notification category"
+                    }
+                },
+                "required": ["title", "body"]
+            }),
+        },
+        Tool {
+            name: "notifications_mark_read".to_string(),
+            description: "Mark notifications as read".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "notification_id": {
+                        "type": "string",
+                        "description": "ID of notification to mark read (omit to mark all)"
+                    }
+                },
+                "required": []
+            }),
+        },
+        // === Terminal Tools ===
+        Tool {
+            name: "terminal_history".to_string(),
+            description: "Get command history synced from all devices".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum commands to return",
+                        "default": 50
+                    },
+                    "search": {
+                        "type": "string",
+                        "description": "Search query to filter commands"
+                    },
+                    "directory": {
+                        "type": "string",
+                        "description": "Filter by working directory"
+                    }
+                },
+                "required": []
+            }),
+        },
+        Tool {
+            name: "terminal_recordings".to_string(),
+            description: "List terminal session recordings (asciinema format)".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum recordings to return",
+                        "default": 10
+                    }
+                },
+                "required": []
+            }),
+        },
+        Tool {
+            name: "terminal_environment".to_string(),
+            description: "Get shell environment (aliases, functions, safe env vars)".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "include_aliases": {
+                        "type": "boolean",
+                        "description": "Include shell aliases",
+                        "default": true
+                    },
+                    "include_functions": {
+                        "type": "boolean",
+                        "description": "Include shell functions",
+                        "default": true
+                    },
+                    "include_env": {
+                        "type": "boolean",
+                        "description": "Include environment variables (safe ones only)",
+                        "default": true
+                    }
+                },
+                "required": []
+            }),
+        },
     ];
 
     Ok(serde_json::json!({ "tools": tools }))
@@ -364,12 +557,26 @@ async fn handle_tools_call(
     let arguments = params.get("arguments").cloned().unwrap_or(serde_json::json!({}));
 
     let result = match tool_name {
+        // Core bridge tools
         "bridge_status" => tools::status(state).await,
         "bridge_sync" => tools::sync(state, &arguments).await,
         "bridge_share" => tools::share(state, &arguments).await,
         "bridge_peers" => tools::peers(state).await,
         "bridge_screenshots" => tools::screenshots(state, &arguments).await,
         "bridge_files" => tools::files(state, &arguments).await,
+        // Clipboard tools
+        "clipboard_get" => tools::clipboard_get(state).await,
+        "clipboard_set" => tools::clipboard_set(state, &arguments).await,
+        "clipboard_history" => tools::clipboard_history(state, &arguments).await,
+        "clipboard_favorites" => tools::clipboard_favorites(state).await,
+        // Notification tools
+        "notifications_list" => tools::notifications_list(state, &arguments).await,
+        "notifications_send" => tools::notifications_send(state, &arguments).await,
+        "notifications_mark_read" => tools::notifications_mark_read(state, &arguments).await,
+        // Terminal tools
+        "terminal_history" => tools::terminal_history(state, &arguments).await,
+        "terminal_recordings" => tools::terminal_recordings(state, &arguments).await,
+        "terminal_environment" => tools::terminal_environment(state, &arguments).await,
         _ => Err(format!("Unknown tool: {}", tool_name)),
     };
 
