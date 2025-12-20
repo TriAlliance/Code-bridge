@@ -19,6 +19,20 @@ class BridgeManager: ObservableObject {
     @Published var screenshots: [Screenshot] = []
     @Published var recentActivity: [String] = []
 
+    // Clipboard
+    @Published var clipboardHistory: [ClipboardEntry] = []
+
+    // Notifications
+    @Published var notifications: [AppNotification] = []
+
+    // Terminal
+    @Published var terminalRecordings: [TerminalRecording] = []
+    @Published var commandHistory: [CommandHistoryEntry] = []
+    @Published var recentDirectories: [String] = []
+    @Published var shellAliases: [ShellAlias] = []
+    @Published var shellFunctions: [ShellFunction] = []
+    @Published var environmentVars: [EnvironmentVar] = []
+
     // Configuration
     @Published var watchPaths: [String] = []
     @Published var ignorePatterns: [String] = [".git", "node_modules", "target"]
@@ -45,6 +59,9 @@ class BridgeManager: ObservableObject {
             "Bridge initialized",
             "Listening for peers...",
         ]
+
+        // Load sample data for new features
+        loadSampleData()
     }
 
     func sync() {
@@ -102,6 +119,251 @@ class BridgeManager: ObservableObject {
 
     func shareFile(_ file: TrackedFile) {
         recentActivity.insert("Sharing: \(file.name)", at: 0)
+    }
+
+    // MARK: - Clipboard Methods
+
+    func clearClipboardHistory() {
+        clipboardHistory.removeAll()
+        recentActivity.insert("Cleared clipboard history", at: 0)
+    }
+
+    func toggleClipboardFavorite(_ id: String) {
+        if let index = clipboardHistory.firstIndex(where: { $0.id == id }) {
+            clipboardHistory[index].isFavorite.toggle()
+        }
+    }
+
+    // MARK: - Notification Methods
+
+    func markAllNotificationsRead() {
+        for i in notifications.indices {
+            notifications[i].isRead = true
+        }
+    }
+
+    func markNotificationRead(_ id: String) {
+        if let index = notifications.firstIndex(where: { $0.id == id }) {
+            notifications[index].isRead = true
+        }
+    }
+
+    func dismissNotification(_ id: String) {
+        notifications.removeAll { $0.id == id }
+    }
+
+    func executeNotificationAction(_ notificationId: String, actionId: String) {
+        recentActivity.insert("Executed action: \(actionId)", at: 0)
+        markNotificationRead(notificationId)
+    }
+
+    // MARK: - Terminal Methods
+
+    func startTerminalRecording() {
+        recentActivity.insert("Started terminal recording", at: 0)
+    }
+
+    func stopTerminalRecording() {
+        let recording = TerminalRecording(
+            id: UUID().uuidString,
+            title: "Recording \(terminalRecordings.count + 1)",
+            shell: "zsh",
+            recordedAt: Date(),
+            duration: Double.random(in: 30...300),
+            outputPreview: "$ ls -la\ntotal 0\ndrwxr-xr-x  5 user  staff  160 Jan  1 12:00 .\ndrwxr-xr-x  3 user  staff   96 Jan  1 12:00 ..\n"
+        )
+        terminalRecordings.insert(recording, at: 0)
+        recentActivity.insert("Stopped terminal recording", at: 0)
+    }
+
+    func syncCommandHistory() {
+        recentActivity.insert("Syncing command history...", at: 0)
+        Task {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            await MainActor.run {
+                self.recentActivity.insert("Command history synced", at: 0)
+            }
+        }
+    }
+
+    // MARK: - Sample Data
+
+    func loadSampleData() {
+        // Sample clipboard entries
+        clipboardHistory = [
+            ClipboardEntry(
+                id: "clip1",
+                contentType: "code",
+                preview: "func main() { println!(\"Hello\"); }",
+                timestamp: Date().addingTimeInterval(-3600),
+                sourceDevice: deviceId,
+                isFavorite: true,
+                isPinned: false,
+                textContent: "func main() {\n    println!(\"Hello, World!\");\n}",
+                imageData: nil,
+                language: "rust",
+                appSource: "VSCode",
+                dataSize: 45
+            ),
+            ClipboardEntry(
+                id: "clip2",
+                contentType: "url",
+                preview: "https://github.com/anthropics/claude-code",
+                timestamp: Date().addingTimeInterval(-7200),
+                sourceDevice: "Ubuntu-Dev",
+                isFavorite: false,
+                isPinned: false,
+                textContent: "https://github.com/anthropics/claude-code",
+                imageData: nil,
+                language: nil,
+                appSource: "Firefox",
+                dataSize: 42
+            ),
+            ClipboardEntry(
+                id: "clip3",
+                contentType: "text",
+                preview: "Meeting notes from standup...",
+                timestamp: Date().addingTimeInterval(-86400),
+                sourceDevice: deviceId,
+                isFavorite: false,
+                isPinned: false,
+                textContent: "Meeting notes from standup:\n- Discussed project timeline\n- Reviewed sprint goals\n- Assigned new tasks",
+                imageData: nil,
+                language: nil,
+                appSource: "Notes",
+                dataSize: 120
+            )
+        ]
+
+        // Sample notifications
+        notifications = [
+            AppNotification(
+                id: "notif1",
+                appName: "GitHub Actions",
+                title: "Build Succeeded",
+                subtitle: "main branch",
+                body: "CI/CD pipeline completed successfully for commit abc123",
+                timestamp: Date().addingTimeInterval(-1800),
+                priority: .normal,
+                category: .build,
+                sourceDevice: deviceId,
+                actions: [
+                    NotificationAction(id: "view", label: "View"),
+                    NotificationAction(id: "deploy", label: "Deploy")
+                ],
+                isRead: false
+            ),
+            AppNotification(
+                id: "notif2",
+                appName: "GitHub",
+                title: "New PR Review",
+                subtitle: nil,
+                body: "Alex commented on your pull request #42",
+                timestamp: Date().addingTimeInterval(-3600),
+                priority: .high,
+                category: .pullRequest,
+                sourceDevice: "Ubuntu-Dev",
+                actions: [
+                    NotificationAction(id: "view", label: "View PR")
+                ],
+                isRead: false
+            ),
+            AppNotification(
+                id: "notif3",
+                appName: "Security Scanner",
+                title: "Vulnerability Found",
+                subtitle: "High Severity",
+                body: "Detected outdated dependency with known CVE",
+                timestamp: Date().addingTimeInterval(-7200),
+                priority: .critical,
+                category: .security,
+                sourceDevice: deviceId,
+                actions: [
+                    NotificationAction(id: "fix", label: "Fix Now"),
+                    NotificationAction(id: "ignore", label: "Ignore")
+                ],
+                isRead: true
+            )
+        ]
+
+        // Sample terminal recordings
+        terminalRecordings = [
+            TerminalRecording(
+                id: "rec1",
+                title: "Project Setup",
+                shell: "zsh",
+                recordedAt: Date().addingTimeInterval(-86400),
+                duration: 245,
+                outputPreview: "$ cargo new my-project\n     Created binary (application) `my-project` package\n$ cd my-project\n$ cargo build\n   Compiling my-project v0.1.0\n    Finished dev [unoptimized + debuginfo] target(s)"
+            ),
+            TerminalRecording(
+                id: "rec2",
+                title: "Debug Session",
+                shell: "bash",
+                recordedAt: Date().addingTimeInterval(-172800),
+                duration: 180,
+                outputPreview: "$ npm run test\n\n> test\n> jest\n\nPASS  src/utils.test.ts\n  ✓ should format date correctly (5 ms)\n  ✓ should parse JSON safely (3 ms)"
+            )
+        ]
+
+        // Sample command history
+        commandHistory = [
+            CommandHistoryEntry(
+                id: "cmd1",
+                command: "cargo build --release",
+                workingDir: "~/Projects/code-bridge",
+                exitCode: 0,
+                duration: 45.2,
+                timestamp: Date().addingTimeInterval(-300),
+                sourceDevice: deviceId
+            ),
+            CommandHistoryEntry(
+                id: "cmd2",
+                command: "git push origin main",
+                workingDir: "~/Projects/code-bridge",
+                exitCode: 0,
+                duration: 2.1,
+                timestamp: Date().addingTimeInterval(-600),
+                sourceDevice: deviceId
+            ),
+            CommandHistoryEntry(
+                id: "cmd3",
+                command: "npm install",
+                workingDir: "~/Projects/frontend",
+                exitCode: 0,
+                duration: 12.5,
+                timestamp: Date().addingTimeInterval(-900),
+                sourceDevice: "Ubuntu-Dev"
+            )
+        ]
+
+        // Sample directories
+        recentDirectories = [
+            "~/Projects/code-bridge",
+            "~/Projects/frontend",
+            "~/Documents"
+        ]
+
+        // Sample aliases
+        shellAliases = [
+            ShellAlias(name: "ll", command: "ls -la"),
+            ShellAlias(name: "gs", command: "git status"),
+            ShellAlias(name: "gp", command: "git push"),
+            ShellAlias(name: "cb", command: "cargo build")
+        ]
+
+        // Sample functions
+        shellFunctions = [
+            ShellFunction(name: "mkcd", body: "mkdir -p $1 && cd $1"),
+            ShellFunction(name: "gitlog", body: "git log --oneline -n ${1:-10}")
+        ]
+
+        // Sample environment vars
+        environmentVars = [
+            EnvironmentVar(name: "PATH", value: "/usr/local/bin:/usr/bin:/bin", isSensitive: false),
+            EnvironmentVar(name: "EDITOR", value: "nvim", isSensitive: false),
+            EnvironmentVar(name: "GITHUB_TOKEN", value: "••••••••", isSensitive: true)
+        ]
     }
 }
 

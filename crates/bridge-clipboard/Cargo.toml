@@ -1,0 +1,25 @@
+[package]
+name = "bridge-clipboard"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Universal clipboard sync with history for Code Bridge"
+
+[dependencies]
+bridge-core = { path = "../bridge-core" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+uuid = { version = "1.6", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+arboard = "3.2"
+image = "0.24"
+rusqlite = { workspace = true }
+base64 = "0.21"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.9"

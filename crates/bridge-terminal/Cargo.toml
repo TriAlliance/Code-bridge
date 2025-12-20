@@ -1,0 +1,25 @@
+[package]
+name = "bridge-terminal"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Terminal session recording and command history sync"
+
+[dependencies]
+bridge-core = { path = "../bridge-core" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+uuid = { version = "1.6", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+rusqlite = { workspace = true }
+portable-pty = "0.8"
+shell-words = "1.1"
+dirs = "5.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.9"

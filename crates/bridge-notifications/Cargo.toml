@@ -1,0 +1,34 @@
+[package]
+name = "bridge-notifications"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Cross-platform notification bridge for developers"
+
+[dependencies]
+bridge-core = { path = "../bridge-core" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+uuid = { version = "1.6", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+rusqlite = { workspace = true }
+reqwest = { version = "0.11", features = ["json"] }
+regex = "1.10"
+
+# Platform-specific notifications
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus = "4.0"
+notify-rust = "4.10"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = "0.2"
+cocoa = "0.25"
+mac-notification-sys = "0.6"
+
+[dev-dependencies]
+tokio-test = "0.4"
+wiremock = "0.5"

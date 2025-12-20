@@ -19,11 +19,19 @@ struct ContentView: View {
                 PeersView()
             case 3:
                 ScreenshotsView()
+            case 4:
+                ClipboardView()
+            case 5:
+                NotificationsView()
+            case 6:
+                TerminalView()
+            case 7:
+                TransformView()
             default:
                 DashboardView()
             }
         }
-        .frame(minWidth: 800, minHeight: 600)
+        .frame(minWidth: 900, minHeight: 700)
     }
 }
 
@@ -45,6 +53,52 @@ struct Sidebar: View {
                     .tag(2)
                 Label("Screenshots", systemImage: "photo")
                     .tag(3)
+            }
+
+            Section("Productivity") {
+                Label {
+                    HStack {
+                        Text("Clipboard")
+                        if bridgeManager.clipboardHistory.count > 0 {
+                            Text("\(bridgeManager.clipboardHistory.count)")
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.secondary.opacity(0.3))
+                                .cornerRadius(8)
+                        }
+                    }
+                } icon: {
+                    Image(systemName: "doc.on.clipboard")
+                }
+                .tag(4)
+
+                Label {
+                    HStack {
+                        Text("Notifications")
+                        let unread = bridgeManager.notifications.filter { !$0.isRead }.count
+                        if unread > 0 {
+                            Text("\(unread)")
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                    }
+                } icon: {
+                    Image(systemName: "bell")
+                }
+                .tag(5)
+
+                Label("Terminal", systemImage: "terminal")
+                    .tag(6)
+            }
+
+            Section("Tools") {
+                Label("Transform", systemImage: "arrow.triangle.2.circlepath")
+                    .tag(7)
             }
         }
         .listStyle(.sidebar)
