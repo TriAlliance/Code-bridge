@@ -117,7 +117,7 @@ fn detect_language(text: &str) -> String {
         ("sql", vec!["SELECT ", "INSERT ", "UPDATE ", "DELETE ", "FROM ", "WHERE "]),
         ("shell", vec!["#!/bin/", "echo ", "if [", "fi", "done", "export "]),
         ("yaml", vec!["- name:", "  - ", "  key:", "---"]),
-        ("json", vec![r#"":#, "{\n  ", "[\n  "]),
+        ("json", vec![r#"":"#, "{\n  ", "[\n  "]),
     ];
 
     for (lang, indicators) in patterns {

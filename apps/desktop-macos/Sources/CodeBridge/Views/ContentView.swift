@@ -27,11 +27,166 @@ struct ContentView: View {
                 TerminalView()
             case 7:
                 TransformView()
+            case 8:
+                BackupView()
             default:
                 DashboardView()
             }
         }
         .frame(minWidth: 900, minHeight: 700)
+        // Global screenshot preview - use ScreenshotSheetPresenter to observe service
+        .background {
+            ScreenshotSheetPresenter()
+        }
+    }
+}
+
+/// Presents screenshot preview sheet by observing ScreenshotService directly
+struct ScreenshotSheetPresenter: View {
+    @EnvironmentObject var bridgeManager: BridgeManager
+
+    var body: some View {
+        ScreenshotSheetObserver(service: bridgeManager.screenshotService)
+            .environmentObject(bridgeManager)
+    }
+}
+
+struct ScreenshotSheetObserver: View {
+    @ObservedObject var service: ScreenshotService
+    @EnvironmentObject var bridgeManager: BridgeManager
+
+    var body: some View {
+        Color.clear
+            .sheet(isPresented: $service.showPreview) {
+                if let pending = service.pendingScreenshot {
+                    ScreenshotPreviewSheet(pending: pending)
+                        .environmentObject(bridgeManager)
+                }
+            }
+    }
+}
+
+/// Container view that observes ScreenshotService directly
+struct ScreenshotPreviewContainer: View {
+    @EnvironmentObject var bridgeManager: BridgeManager
+
+    var body: some View {
+        // Force view update by observing the service
+        ScreenshotPreviewObserver(service: bridgeManager.screenshotService)
+    }
+}
+
+struct ScreenshotPreviewObserver: View {
+    @ObservedObject var service: ScreenshotService
+
+    var body: some View {
+        if service.showPreview, let pending = service.pendingScreenshot {
+            ScreenshotPreviewOverlay(pending: pending)
+        }
+    }
+}
+
+/// Sheet view for screenshot preview with proper modal interaction
+struct ScreenshotPreviewSheet: View {
+    let pending: PendingScreenshot
+    @EnvironmentObject var bridgeManager: BridgeManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var uploadToNAS: Bool = true
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Screenshot Preview")
+                    .font(.headline)
+                Spacer()
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding()
+
+            Divider()
+
+            // Image preview
+            ScrollView {
+                Image(nsImage: pending.image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .cornerRadius(8)
+                    .padding()
+            }
+            .frame(maxHeight: 400)
+
+            Divider()
+
+            // Info bar
+            HStack {
+                Label("\(pending.width) × \(pending.height)", systemImage: "aspectratio")
+                    .font(.caption)
+
+                Divider()
+                    .frame(height: 16)
+
+                Label(ByteCountFormatter.string(fromByteCount: pending.fileSize, countStyle: .file), systemImage: "doc")
+                    .font(.caption)
+
+                if let ocrText = pending.ocrText, !ocrText.isEmpty {
+                    Divider()
+                        .frame(height: 16)
+                    Label("Text detected", systemImage: "text.viewfinder")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+
+            Divider()
+
+            // Actions
+            HStack(spacing: 12) {
+                Button(action: {
+                    bridgeManager.screenshotService.copyPendingToClipboard()
+                    dismiss()
+                }) {
+                    Label("Copy Only", systemImage: "doc.on.doc")
+                }
+                .buttonStyle(.bordered)
+
+                Spacer()
+
+                Toggle("Upload to NAS", isOn: $uploadToNAS)
+                    .toggleStyle(.checkbox)
+
+                Button(action: {
+                    dismiss()
+                }) {
+                    Text("Discard")
+                }
+                .buttonStyle(.bordered)
+
+                Button(action: {
+                    Task {
+                        await bridgeManager.screenshotService.confirmPendingScreenshot(uploadToNAS: uploadToNAS)
+                        dismiss()
+                    }
+                }) {
+                    Label("Save", systemImage: "square.and.arrow.down")
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.return, modifiers: [])
+            }
+            .padding()
+        }
+        .frame(width: 600)
     }
 }
 
@@ -99,6 +254,19 @@ struct Sidebar: View {
             Section("Tools") {
                 Label("Transform", systemImage: "arrow.triangle.2.circlepath")
                     .tag(7)
+
+                Label {
+                    HStack {
+                        Text("Backup")
+                        if bridgeManager.backupService.isBackupRunning {
+                            ProgressView()
+                                .scaleEffect(0.5)
+                        }
+                    }
+                } icon: {
+                    Image(systemName: "externaldrive.badge.timemachine")
+                }
+                .tag(8)
             }
         }
         .listStyle(.sidebar)
@@ -144,6 +312,13 @@ struct DashboardView: View {
                         title: "Status",
                         value: bridgeManager.isSyncing ? "Syncing" : "Ready",
                         icon: bridgeManager.isSyncing ? "arrow.triangle.2.circlepath" : "checkmark.circle"
+                    )
+
+                    StatusCard(
+                        title: "NAS",
+                        value: bridgeManager.nasConnectionStatus.rawValue,
+                        icon: bridgeManager.nasConnectionStatus.icon,
+                        color: bridgeManager.nasConnectionStatus.color
                     )
                 }
                 .padding()
@@ -199,12 +374,13 @@ struct StatusCard: View {
     let title: String
     let value: String
     let icon: String
+    var color: Color = .accentColor
 
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title)
-                .foregroundColor(.accentColor)
+                .foregroundColor(color)
 
             Text(value)
                 .font(.title2)

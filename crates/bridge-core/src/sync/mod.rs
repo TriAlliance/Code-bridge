@@ -3,7 +3,7 @@
 //! Handles bidirectional synchronization between peers
 //! using CRDTs for conflict-free merging.
 
-use crate::{storage::ContentHash, BridgeError, Result};
+use crate::{storage::ContentHash, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;

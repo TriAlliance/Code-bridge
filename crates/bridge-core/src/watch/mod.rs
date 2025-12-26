@@ -4,7 +4,7 @@
 //! for file creation, modification, and deletion.
 
 use crate::{BridgeError, Result};
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{new_debouncer, DebouncedEvent, Debouncer};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -178,7 +178,7 @@ impl FileWatcher {
 
     /// Check if a path should be ignored
     fn should_ignore(&self, path: &Path) -> bool {
-        let path_str = path.to_string_lossy();
+        let path_str = path.to_string_lossy().to_string();
 
         // Check ignore patterns
         for pattern in &self.ignore_patterns {

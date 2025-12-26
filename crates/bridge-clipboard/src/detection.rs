@@ -8,7 +8,7 @@ use std::sync::LazyLock;
 static SENSITIVE_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![
         // API Keys
-        Regex::new(r"(?i)(api[_-]?key|apikey|api_secret)[=:]\s*['\"]?[a-zA-Z0-9_\-]{20,}").unwrap(),
+        Regex::new(r#"(?i)(api[_-]?key|apikey|api_secret)[=:]\s*['"]?[a-zA-Z0-9_-]{20,}"#).unwrap(),
         Regex::new(r"sk-[a-zA-Z0-9]{32,}").unwrap(), // OpenAI
         Regex::new(r"sk_live_[a-zA-Z0-9]{24,}").unwrap(), // Stripe
         Regex::new(r"rk_live_[a-zA-Z0-9]{24,}").unwrap(), // Stripe
@@ -18,15 +18,15 @@ static SENSITIVE_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 
         // AWS
         Regex::new(r"AKIA[0-9A-Z]{16}").unwrap(), // AWS Access Key
-        Regex::new(r"(?i)aws[_-]?secret[_-]?access[_-]?key[=:]\s*['\"]?[a-zA-Z0-9/+=]{40}").unwrap(),
+        Regex::new(r"(?i)aws[_-]?secret[_-]?access[_-]?key[=:].*[a-zA-Z0-9/+=]{40}").unwrap(),
 
         // Private Keys
         Regex::new(r"-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----").unwrap(),
         Regex::new(r"-----BEGIN PGP PRIVATE KEY BLOCK-----").unwrap(),
 
         // Passwords
-        Regex::new(r"(?i)(password|passwd|pwd)[=:]\s*['\"]?[^\s'\"]{8,}").unwrap(),
-        Regex::new(r"(?i)(secret|token)[=:]\s*['\"]?[a-zA-Z0-9_\-]{16,}").unwrap(),
+        Regex::new(r#"(?i)(password|passwd|pwd)[=:]\s*['"]?[^\s'"]{8,}"#).unwrap(),
+        Regex::new(r"(?i)(secret|token)[=:]\s*[a-zA-Z0-9_-]{16,}").unwrap(),
 
         // Database connection strings
         Regex::new(r"(?i)(mongodb|postgres|mysql|redis)://[^@\s]+:[^@\s]+@").unwrap(),
@@ -42,7 +42,7 @@ static SENSITIVE_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
         Regex::new(r"\b\d{3}-\d{2}-\d{4}\b").unwrap(),
 
         // Bearer tokens
-        Regex::new(r"(?i)bearer\s+[a-zA-Z0-9_\-.]+").unwrap(),
+        Regex::new(r"(?i)bearer\s+[a-zA-Z0-9_.-]+").unwrap(),
 
         // SSH keys
         Regex::new(r"ssh-(rsa|ed25519|ecdsa)\s+[A-Za-z0-9+/=]+").unwrap(),

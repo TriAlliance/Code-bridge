@@ -45,6 +45,10 @@ humansize = { workspace = true }
 futures = { workspace = true }
 async-trait = { workspace = true }
 
+# System utilities
+hostname = "0.4"
+glob = "0.3"
+
 [dev-dependencies]
 tempfile = "3.9"
 tokio-test = "0.4"

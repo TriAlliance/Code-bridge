@@ -56,7 +56,6 @@ pub async fn init() -> Result<Bridge> {
 /// Main Code Bridge instance
 pub struct Bridge {
     config: Config,
-    network: PeerNetwork,
     storage: ContentStore,
     watcher: FileWatcher,
     sync_engine: SyncEngine,
@@ -67,13 +66,11 @@ impl Bridge {
     pub async fn new() -> Result<Self> {
         let config = Config::load_or_create()?;
         let storage = ContentStore::new(&config)?;
-        let network = PeerNetwork::new(&config).await?;
         let watcher = FileWatcher::new()?;
         let sync_engine = SyncEngine::new();
 
         Ok(Self {
             config,
-            network,
             storage,
             watcher,
             sync_engine,
@@ -83,16 +80,6 @@ impl Bridge {
     /// Get the configuration
     pub fn config(&self) -> &Config {
         &self.config
-    }
-
-    /// Get the peer network
-    pub fn network(&self) -> &PeerNetwork {
-        &self.network
-    }
-
-    /// Get mutable access to the peer network
-    pub fn network_mut(&mut self) -> &mut PeerNetwork {
-        &mut self.network
     }
 
     /// Get the content store
@@ -115,13 +102,9 @@ impl Bridge {
         &self.sync_engine
     }
 
-    /// Start the bridge (networking, watching, syncing)
+    /// Start the bridge (storage, watching, syncing)
     pub async fn start(&mut self) -> Result<()> {
         tracing::info!("Starting Code Bridge...");
-
-        // Start the P2P network
-        self.network.start().await?;
-
         tracing::info!("Code Bridge started successfully");
         Ok(())
     }
@@ -129,7 +112,6 @@ impl Bridge {
     /// Stop the bridge
     pub async fn stop(&mut self) -> Result<()> {
         tracing::info!("Stopping Code Bridge...");
-        self.network.stop().await?;
         Ok(())
     }
 }

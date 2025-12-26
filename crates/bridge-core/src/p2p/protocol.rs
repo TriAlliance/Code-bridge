@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::io;
 
 /// Protocol identifier for file transfers
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TransferProtocol;
 
 impl AsRef<str> for TransferProtocol {

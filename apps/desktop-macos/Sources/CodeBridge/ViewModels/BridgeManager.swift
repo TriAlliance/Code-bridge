@@ -37,11 +37,68 @@ class BridgeManager: ObservableObject {
     @Published var watchPaths: [String] = []
     @Published var ignorePatterns: [String] = [".git", "node_modules", "target"]
 
+    // MARK: - NAS/Backup Properties
+    @Published var nasConnections: [QNAPConnection] = []
+    @Published var nasConnectionStatus: NASConnectionStatus = .disconnected
+
+    // Services
+    let qnapService: QNAPService
+    var backupService: BackupService!
+    var screenshotService: ScreenshotService!
+    var hotkeyManager: HotkeyManager!
+
+    // Persistence keys
+    private let nasConnectionsKey = "CodeBridge.NASConnections"
+
     init() {
-        // Initialize bridge
+        // Initialize services
+        self.qnapService = QNAPService()
+
+        // Load persisted NAS connections first
+        if let data = UserDefaults.standard.data(forKey: nasConnectionsKey),
+           let connections = try? JSONDecoder().decode([QNAPConnection].self, from: data) {
+            nasConnections = connections
+        }
+
+        // Initialize backup service with connections closure
+        self.backupService = BackupService(qnapService: qnapService, connections: { [weak self] in
+            self?.nasConnections ?? []
+        })
+
+        // Initialize screenshot service
+        self.screenshotService = ScreenshotService(qnapService: qnapService, connections: { [weak self] in
+            self?.nasConnections ?? []
+        })
+
+        // Initialize hotkey manager
+        self.hotkeyManager = HotkeyManager()
+        self.hotkeyManager.onScreenshotHotkey = { [weak self] mode in
+            Task { @MainActor in
+                await self?.screenshotService.captureScreenshot(mode: mode)
+            }
+        }
+
+        // Initialize bridge and auto-connect to NAS
         Task {
             await initializeBridge()
+            await autoConnectToNAS()
         }
+    }
+
+    /// Auto-connect to the default NAS connection on startup
+    private func autoConnectToNAS() async {
+        guard let defaultConnection = nasConnections.first(where: { $0.isDefault }) ?? nasConnections.first else {
+            // No NAS connections configured
+            return
+        }
+
+        // Only auto-connect if we have valid credentials
+        guard !defaultConnection.host.isEmpty,
+              !defaultConnection.username.isEmpty else {
+            return
+        }
+
+        await connectToNAS(defaultConnection)
     }
 
     func initializeBridge() async {
@@ -364,5 +421,96 @@ class BridgeManager: ObservableObject {
             EnvironmentVar(name: "EDITOR", value: "nvim", isSensitive: false),
             EnvironmentVar(name: "GITHUB_TOKEN", value: "••••••••", isSensitive: true)
         ]
+    }
+
+    // MARK: - NAS Connection Management
+
+    /// Load NAS connections from persistence
+    private func loadNASConnections() {
+        if let data = UserDefaults.standard.data(forKey: nasConnectionsKey),
+           let connections = try? JSONDecoder().decode([QNAPConnection].self, from: data) {
+            nasConnections = connections
+        }
+    }
+
+    /// Save NAS connections to persistence
+    private func saveNASConnections() {
+        if let data = try? JSONEncoder().encode(nasConnections) {
+            UserDefaults.standard.set(data, forKey: nasConnectionsKey)
+        }
+    }
+
+    /// Add a new NAS connection
+    func addNASConnection(_ connection: QNAPConnection) {
+        var newConnection = connection
+
+        // If this is the first connection, make it default
+        if nasConnections.isEmpty {
+            newConnection.isDefault = true
+        }
+
+        nasConnections.append(newConnection)
+        saveNASConnections()
+        recentActivity.insert("Added NAS connection: \(connection.name)", at: 0)
+    }
+
+    /// Update an existing NAS connection
+    func updateNASConnection(_ connection: QNAPConnection) {
+        if let index = nasConnections.firstIndex(where: { $0.id == connection.id }) {
+            nasConnections[index] = connection
+            saveNASConnections()
+            recentActivity.insert("Updated NAS connection: \(connection.name)", at: 0)
+        }
+    }
+
+    /// Remove a NAS connection
+    func removeNASConnection(_ connectionId: String) {
+        if let index = nasConnections.firstIndex(where: { $0.id == connectionId }) {
+            let name = nasConnections[index].name
+            nasConnections.remove(at: index)
+
+            // If we removed the default, set a new default
+            if !nasConnections.isEmpty && !nasConnections.contains(where: { $0.isDefault }) {
+                nasConnections[0].isDefault = true
+            }
+
+            saveNASConnections()
+            recentActivity.insert("Removed NAS connection: \(name)", at: 0)
+        }
+    }
+
+    /// Set a connection as the default
+    func setDefaultNASConnection(_ connectionId: String) {
+        for i in nasConnections.indices {
+            nasConnections[i].isDefault = (nasConnections[i].id == connectionId)
+        }
+        saveNASConnections()
+    }
+
+    /// Connect to a NAS
+    func connectToNAS(_ connection: QNAPConnection) async {
+        nasConnectionStatus = .connecting
+        recentActivity.insert("Connecting to \(connection.name)...", at: 0)
+
+        do {
+            try await qnapService.connect(using: connection)
+            nasConnectionStatus = .connected
+            recentActivity.insert("Connected to \(connection.name)", at: 0)
+        } catch {
+            nasConnectionStatus = .error
+            recentActivity.insert("Failed to connect: \(error.localizedDescription)", at: 0)
+        }
+    }
+
+    /// Disconnect from NAS
+    func disconnectFromNAS() async {
+        await qnapService.disconnect()
+        nasConnectionStatus = .disconnected
+        recentActivity.insert("Disconnected from NAS", at: 0)
+    }
+
+    /// Get the default NAS connection
+    var defaultNASConnection: QNAPConnection? {
+        nasConnections.first(where: { $0.isDefault })
     }
 }

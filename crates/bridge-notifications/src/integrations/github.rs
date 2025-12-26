@@ -1,9 +1,10 @@
 //! GitHub integration for notifications
 
+use async_trait::async_trait;
 use super::NotificationSource;
 use crate::{
     BuildNotification, BuildSource, BuildStatus, Notification, NotificationAction,
-    NotificationError, PREvent, PullRequestNotification, Result,
+    NotificationError, Result,
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
@@ -96,12 +97,18 @@ impl GitHubSource {
             }
 
             let runs: WorkflowRunsResponse = response.json().await?;
-            let mut last_check = self.last_check.lock().unwrap();
-            let last_time = last_check
-                .get(repo)
-                .cloned()
-                .unwrap_or_else(|| Utc::now() - chrono::Duration::hours(1));
 
+            // Get last check time (release lock immediately)
+            let last_time = {
+                let last_check = self.last_check.lock().unwrap();
+                last_check
+                    .get(repo)
+                    .cloned()
+                    .unwrap_or_else(|| Utc::now() - chrono::Duration::hours(1))
+            };
+
+            // Collect notifications to send
+            let mut notifications = Vec::new();
             for run in runs.workflow_runs {
                 if run.updated_at > last_time {
                     let build = BuildNotification {
@@ -122,13 +129,17 @@ impl GitHubSource {
                         duration: None,
                         actions: Vec::new(),
                     };
-
-                    let notification = build.to_notification(&self.device_id);
-                    tx.send(notification).await.ok();
+                    notifications.push(build.to_notification(&self.device_id));
                 }
             }
 
-            last_check.insert(repo.clone(), Utc::now());
+            // Send notifications (outside of lock scope)
+            for notification in notifications {
+                tx.send(notification).await.ok();
+            }
+
+            // Update last check time
+            self.last_check.lock().unwrap().insert(repo.clone(), Utc::now());
         }
 
         Ok(())
@@ -156,7 +167,7 @@ impl GitHubSource {
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl NotificationSource for GitHubSource {
     fn name(&self) -> &str {
         "GitHub"

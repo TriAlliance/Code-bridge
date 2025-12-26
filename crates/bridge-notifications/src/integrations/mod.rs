@@ -3,12 +3,13 @@
 pub mod github;
 pub mod local_build;
 
-use crate::{BuildNotification, Notification, PullRequestNotification, Result, TestNotification};
+use async_trait::async_trait;
+use crate::{Notification, Result};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
 /// Trait for notification sources
-#[async_trait::async_trait]
+#[async_trait]
 pub trait NotificationSource: Send + Sync {
     /// Get source name
     fn name(&self) -> &str;

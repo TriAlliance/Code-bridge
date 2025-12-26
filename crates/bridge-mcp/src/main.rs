@@ -11,10 +11,9 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use bridge_core::{Bridge, Config};
+use bridge_core::Config;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tower_http::cors::CorsLayer;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
@@ -23,8 +22,7 @@ mod tools;
 
 /// MCP Server State
 pub struct McpState {
-    bridge: RwLock<Bridge>,
-    config: Config,
+    pub config: Config,
 }
 
 /// MCP Protocol Messages
@@ -115,10 +113,8 @@ async fn run_stdio_server() -> Result<()> {
     info!("Running in stdio mode");
 
     let config = Config::load_or_create()?;
-    let bridge = Bridge::new().await?;
 
     let state = Arc::new(McpState {
-        bridge: RwLock::new(bridge),
         config,
     });
 
@@ -175,10 +171,8 @@ async fn run_http_server(port: u16) -> Result<()> {
     info!("Running in HTTP mode on port {}", port);
 
     let config = Config::load_or_create()?;
-    let bridge = Bridge::new().await?;
 
     let state = Arc::new(McpState {
-        bridge: RwLock::new(bridge),
         config,
     });
 

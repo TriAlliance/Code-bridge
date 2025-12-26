@@ -15,6 +15,40 @@ struct CodeBridgeApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
+        .commands {
+            // Screenshot menu commands
+            CommandMenu("Screenshots") {
+                Button("Capture Full Screen") {
+                    Task {
+                        await bridgeManager.screenshotService.captureFullScreen()
+                    }
+                }
+                .keyboardShortcut("3", modifiers: [.command, .shift])
+
+                Button("Capture Selection") {
+                    Task {
+                        await bridgeManager.screenshotService.captureSelection()
+                    }
+                }
+                .keyboardShortcut("4", modifiers: [.command, .shift])
+
+                Button("Capture Window") {
+                    Task {
+                        await bridgeManager.screenshotService.captureWindow()
+                    }
+                }
+                .keyboardShortcut("5", modifiers: [.command, .shift])
+
+                Divider()
+
+                Button("Upload All to NAS") {
+                    Task {
+                        await bridgeManager.screenshotService.uploadAllToNAS()
+                    }
+                }
+                .keyboardShortcut("u", modifiers: [.command, .shift])
+            }
+        }
 
         // Menu bar extra
         MenuBarExtra {

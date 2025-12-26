@@ -1,5 +1,6 @@
 //! Local build monitoring
 
+use async_trait::async_trait;
 use super::NotificationSource;
 use crate::{
     BuildNotification, BuildSource, BuildStatus, Notification, NotificationError, Result,
@@ -199,7 +200,7 @@ impl LocalBuildMonitor {
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl NotificationSource for LocalBuildMonitor {
     fn name(&self) -> &str {
         "Local Build"

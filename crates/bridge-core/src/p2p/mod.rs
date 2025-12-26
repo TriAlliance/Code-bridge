@@ -9,7 +9,7 @@ mod protocol;
 use crate::{config::Config, BridgeError, Result};
 use futures::StreamExt;
 use libp2p::{
-    identify, kad, mdns, noise, ping, quic, relay, request_response, swarm::SwarmEvent, tcp,
+    identify, mdns, noise, ping, swarm::SwarmEvent, tcp,
     yamux, Multiaddr, PeerId, Swarm, SwarmBuilder,
 };
 use std::collections::HashMap;
@@ -63,10 +63,10 @@ impl PeerNetwork {
     pub async fn new(config: &Config) -> Result<Self> {
         let (event_tx, event_rx) = mpsc::channel(256);
 
-        // Build the swarm
+        // Build the swarm with TCP transport
+        let config_clone = config.clone();
         let swarm = SwarmBuilder::with_new_identity()
             .with_tokio()
-            .with_quic()
             .with_tcp(
                 tcp::Config::default(),
                 noise::Config::new,
@@ -75,9 +75,9 @@ impl PeerNetwork {
             .map_err(|e| BridgeError::Network(e.to_string()))?
             .with_behaviour(|key| {
                 let local_peer_id = key.public().to_peer_id();
-                BridgeBehaviour::new(key.clone(), local_peer_id, config)
+                Ok(BridgeBehaviour::new(key.clone(), local_peer_id, &config_clone))
             })
-            .map_err(|e| BridgeError::Network(e.to_string()))?
+            .map_err(|e| BridgeError::Network(format!("{:?}", e)))?
             .with_swarm_config(|cfg| {
                 cfg.with_idle_connection_timeout(Duration::from_secs(60))
             })
@@ -198,7 +198,7 @@ impl PeerNetwork {
                 None
             }
 
-            SwarmEvent::Behaviour(behaviour::BridgeBehaviourEvent::Identify(identify::Event::Received { peer_id, info })) => {
+            SwarmEvent::Behaviour(behaviour::BridgeBehaviourEvent::Identify(identify::Event::Received { peer_id, info, .. })) => {
                 debug!("Identified peer {}: {:?}", peer_id, info.agent_version);
 
                 if let Some(peer_info) = self.peers.get_mut(&peer_id) {

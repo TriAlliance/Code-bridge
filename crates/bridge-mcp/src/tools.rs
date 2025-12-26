@@ -15,8 +15,7 @@ use std::sync::Arc;
 
 /// Get the current bridge status
 pub async fn status(state: &Arc<McpState>) -> Result<String, String> {
-    let bridge = state.bridge.read().await;
-    let config = bridge.config();
+    let config = &state.config;
 
     let mut output = String::new();
     output.push_str("# Code Bridge Status\n\n");
@@ -30,7 +29,7 @@ pub async fn status(state: &Arc<McpState>) -> Result<String, String> {
     output.push_str(&format!("- TCP: {}\n", if config.network.enable_tcp { "enabled" } else { "disabled" }));
 
     output.push_str("\n## Storage\n");
-    let storage = bridge_core::ContentStore::new(&config).map_err(|e| e.to_string())?;
+    let storage = bridge_core::ContentStore::new(config).map_err(|e| e.to_string())?;
     let files = storage.list_files().map_err(|e| e.to_string())?;
     let total_size: u64 = files.iter().map(|f| f.size).sum();
     output.push_str(&format!("- Files tracked: {}\n", files.len()));
@@ -40,7 +39,7 @@ pub async fn status(state: &Arc<McpState>) -> Result<String, String> {
 }
 
 /// Trigger a sync operation
-pub async fn sync(state: &Arc<McpState>, args: &serde_json::Value) -> Result<String, String> {
+pub async fn sync(_state: &Arc<McpState>, args: &serde_json::Value) -> Result<String, String> {
     let project = args.get("project").and_then(|v| v.as_str());
 
     let mut output = String::new();
@@ -52,19 +51,7 @@ pub async fn sync(state: &Arc<McpState>, args: &serde_json::Value) -> Result<Str
         output.push_str("Syncing all projects\n");
     }
 
-    // Get connected peers
-    let bridge = state.bridge.read().await;
-    let peers = bridge.network().peers();
-
-    if peers.is_empty() {
-        output.push_str("\n⚠️ No peers connected. Run `codebridge peer discover` to find peers.\n");
-    } else {
-        output.push_str(&format!("\nSyncing with {} peer(s):\n", peers.len()));
-        for (peer_id, info) in peers {
-            let name = info.device_name.as_deref().unwrap_or("Unknown");
-            output.push_str(&format!("- {} ({})\n", name, &peer_id.to_string()[..16]));
-        }
-    }
+    output.push_str("\n⚠️ P2P networking not yet initialized. Sync will work when network is started.\n");
 
     Ok(output)
 }
@@ -127,28 +114,12 @@ pub async fn share(state: &Arc<McpState>, args: &serde_json::Value) -> Result<St
 }
 
 /// List connected peers
-pub async fn peers(state: &Arc<McpState>) -> Result<String, String> {
-    let bridge = state.bridge.read().await;
-    let peers = bridge.network().peers();
-
+pub async fn peers(_state: &Arc<McpState>) -> Result<String, String> {
     let mut output = String::new();
     output.push_str("# Connected Peers\n\n");
-    output.push_str(&format!("Local Peer ID: {}\n\n", bridge.network().local_peer_id()));
-
-    if peers.is_empty() {
-        output.push_str("No peers connected.\n\n");
-        output.push_str("To discover peers, run:\n");
-        output.push_str("```\ncodebridge peer discover\n```\n");
-    } else {
-        output.push_str(&format!("{} peer(s) connected:\n\n", peers.len()));
-        for (peer_id, info) in peers {
-            let name = info.device_name.as_deref().unwrap_or("Unknown Device");
-            output.push_str(&format!("## {}\n", name));
-            output.push_str(&format!("- Peer ID: {}\n", peer_id));
-            output.push_str(&format!("- Addresses: {:?}\n", info.addresses));
-            output.push_str(&format!("- Last seen: {:?} ago\n\n", info.last_seen.elapsed()));
-        }
-    }
+    output.push_str("P2P networking not yet initialized.\n\n");
+    output.push_str("To discover peers, run:\n");
+    output.push_str("```\ncodebridge peer discover\n```\n");
 
     Ok(output)
 }

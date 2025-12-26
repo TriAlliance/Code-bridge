@@ -52,24 +52,7 @@ async fn show_linux(notification: &Notification) -> Result<()> {
 
 #[cfg(target_os = "macos")]
 async fn show_macos(notification: &Notification) -> Result<()> {
-    use mac_notification_sys::{
-        send_notification, Notification as MacNotification, MainButton, Response,
-    };
-
-    let mut notif = MacNotification::new();
-    notif
-        .title(&notification.title)
-        .message(&notification.body)
-        .sound("default");
-
-    if let Some(subtitle) = &notification.subtitle {
-        notif.subtitle(subtitle);
-    }
-
-    // Add action button if available
-    if let Some(action) = notification.actions.first() {
-        notif.main_button(MainButton::Single(&action.label));
-    }
+    use mac_notification_sys::send_notification;
 
     send_notification(&notification.title, None, &notification.body, None)
         .map_err(|e| NotificationError::Failed(e.to_string()))?;

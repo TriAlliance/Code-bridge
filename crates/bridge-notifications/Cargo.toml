@@ -18,6 +18,8 @@ chrono = { version = "0.4", features = ["serde"] }
 rusqlite = { workspace = true }
 reqwest = { version = "0.11", features = ["json"] }
 regex = "1.10"
+async-trait = { workspace = true }
+notify = { workspace = true }
 
 # Platform-specific notifications
 [target.'cfg(target_os = "linux")'.dependencies]
